@@ -27,10 +27,15 @@ else:
     # получаем обменный курс
     exrate = round((1/float(rate)), 2)
     print('Обменный курс: ' + str(exrate))
-    conn = sqlite3.connect('ratesdb')
-    c = conn.cursor()
-    c.execute(
-        'INSERT INTO "exrates" ("date", "rate", "exrate") VALUES("{}", "{}", "{}");'.format(
-            date, rate, exrate))
-    conn.commit()
-    conn.close()
+    # Проверяем совпадает ли последняя запись с текущим курсом
+    presence = (c.execute('SELECT EXISTS(SELECT * FROM exrates WHERE exrate = {} LIMIT 1)'.format(exrate))).fetchone()
+    print(presence)
+    # Если не совпадает, записываем новое значение
+    if not presence:
+        conn = sqlite3.connect('ratesdb')
+        c = conn.cursor()
+        c.execute(
+            'INSERT INTO "exrates" ("date", "rate", "exrate") VALUES("{}", "{}", "{}");'.format(
+                date, rate, exrate))
+        conn.commit()
+        conn.close()
