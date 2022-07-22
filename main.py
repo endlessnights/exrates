@@ -3,10 +3,9 @@ from datetime import date
 import requests as requests
 from pip._internal.network.utils import HEADERS
 from pyquery import PyQuery as pq
-
+from flask import render_template
 from flask import Flask
-
-
+import json
 
 conn = sqlite3.connect('ratesdb')
 c = conn.cursor()
@@ -45,12 +44,36 @@ else:
 
 
 app = Flask(__name__)
+app.testing = True
 
 
 @app.route('/')
-def hello_world():
-    return """Обменный курс: {} <br \>
-    Курс: {}""".format(str(exrate), str(rate))
+def exratesview():
+    conn = sqlite3.connect('ratesdb')
+    c = conn.cursor()
+    c.execute('SELECT date,exrate FROM exrates')
+    rows = c.fetchall()
+    for row in rows:
+        dates = row[0]
+        rates = row[1]
+        print(dates)
+        print(rates)
+        # ratesdata = dates+':'+str(rates)+','
+        datesdata = '{"date":' + '"' + str(dates) + '"'
+        ratesdata = ', "rate": ' + str(rates) + '}'
+        data = datesdata+ratesdata
+        result = json.loads(data)
+        print(result)
+
+    conn.commit()
+    conn.close()
+    return render_template(
+        'index.html',
+        title="ExRates PS MIR",
+        # ratesdata=ratesdata,
+        data=data,
+        result=result,
+    )
 
 
 if __name__ == '__main__':
