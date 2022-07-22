@@ -5,9 +5,26 @@
     <meta charset="UTF-8">
 </head>
 <body>
-<h1>{{title}}</h1><br />
-{% for item in result %}
-    {{result.date}}:{{result.rate}},<br />
+{% for item in rows|reverse %}
+{% if loop.index <=1 %}
+<h3>
+    Сегодня {{item.date}}
+</h3>
+<h3>Текущий курс: {{item.exrate}}</h3>
+<h3>Рассчет обменного курса</h3>
+<input type="text" id="num2" placeholder="Сумма в рублях" /> =
+<input type="text" id="sum" readonly="readonly"/>
+<input type="button" value="Рассчитать" onclick="calc()"/>
+
+<script>
+    function calc() {
+        let num1 = {{item.exrate}};
+        let num2 = Number(document.querySelector("#num2").value);
+        let sum = num1 * num2;
+        document.getElementById("sum").value = sum;
+    }
+</script>
+{% endif %}
 {% endfor %}
 <div>
   <canvas id="myChart"></canvas>
@@ -27,8 +44,9 @@
   data: {
     datasets: [{
       data: {
-          January: 10,
-          February: 20
+      {% for item in rows|reverse %}
+'{{item.date}}': {{item.exrate}},
+{% endfor %}
       },
       backgroundColor: 'rgb(255, 99, 132)',
       borderColor: 'rgb(255, 99, 132)',

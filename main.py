@@ -33,7 +33,8 @@ else:
     presence = (c.execute('SELECT EXISTS(SELECT * FROM exrates WHERE exrate = {} LIMIT 1)'.format(exrate))).fetchone()
     print(presence)
     # Если не совпадает, записываем новое значение
-    if not presence:
+    if str(presence) == '(0,)':
+        print('True')
         conn = sqlite3.connect('ratesdb')
         c = conn.cursor()
         c.execute(
@@ -41,7 +42,6 @@ else:
                 date, rate, exrate))
         conn.commit()
         conn.close()
-
 
 app = Flask(__name__)
 app.testing = True
@@ -52,28 +52,14 @@ def exratesview():
     conn = sqlite3.connect('ratesdb')
     c = conn.cursor()
     c.execute('SELECT date,exrate FROM exrates')
-    rows = c.fetchall()
-    for row in rows:
-        dates = row[0]
-        rates = row[1]
-        print(dates)
-        print(rates)
-        # ratesdata = dates+':'+str(rates)+','
-        datesdata = '{"date":' + '"' + str(dates) + '"'
-        ratesdata = ', "rate": ' + str(rates) + '}'
-        data = datesdata+ratesdata
-        result = json.loads(data)
-        print(result)
-
+    columns = [col[0] for col in c.description]
+    rows = [dict(zip(columns, row)) for row in c.fetchall()]
     conn.commit()
     conn.close()
     return render_template(
         'index.html',
         title="ExRates PS MIR",
-        # ratesdata=ratesdata,
-        data=data,
-        result=result,
-    )
+        rows=rows)
 
 
 if __name__ == '__main__':
