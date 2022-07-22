@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date
+from datetime import date, datetime
 import requests as requests
 from pip._internal.network.utils import HEADERS
 from pyquery import PyQuery as pq
@@ -55,9 +55,16 @@ def exratesview():
     rows = [dict(zip(columns, row)) for row in c.fetchall()]
     conn.commit()
     conn.close()
+
+    def format_datetime(value, format="%d-%m-%Y"):
+        if value is None:
+            return ""
+        return datetime.strptime(value, "%Y-%m-%d").strftime(format)
+
+    # configured Jinja2 environment with user defined
+    app.jinja_env.filters['date_format'] = format_datetime
     return render_template(
         'index.html',
-        title="ExRates PS MIR",
         rows=rows)
 
 

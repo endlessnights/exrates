@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js" integrity="sha512-sW/w8s4RWTdFFSduOTGtk4isV1+190E/GghVffMA9XczdJ2MDzSzLEubKAs5h0wzgSJOQTRYyaz73L3d6RtJSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"
+            integrity="sha512-sW/w8s4RWTdFFSduOTGtk4isV1+190E/GghVffMA9XczdJ2MDzSzLEubKAs5h0wzgSJOQTRYyaz73L3d6RtJSg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <meta charset="UTF-8">
+    <title>График обменного курса Рубль>Тенге</title>
 </head>
 <body>
 {% for item in rows|reverse %}
 {% if loop.index <=1 %}
 <h3>
-    Сегодня {{item.date}}
+    Сегодня {{item.date|date_format("%d.%m.%Y")}}
 </h3>
-<h3>Текущий курс: {{item.exrate}}</h3>
+<h3>Текущий курс: <b style="letter-spacing: 2px;">{{item.exrate}}</b> тенге за 1 руб.</h3>
 <h3>Рассчет обменного курса</h3>
-<input type="text" id="num2" placeholder="Сумма в рублях" /> =
+<input type="text" id="num2" placeholder="Сумма в рублях"/> =
 <input type="text" id="sum" readonly="readonly"/>
 <input type="button" value="Рассчитать" onclick="calc()"/>
 
@@ -23,18 +26,18 @@
         let sum = num1 * num2;
         document.getElementById("sum").value = sum;
     }
+
+
 </script>
 {% endif %}
 {% endfor %}
 <div>
-  <canvas id="myChart"></canvas>
+    <canvas id="myChart"></canvas>
 </div>
 <script>
   const data = {
     datasets: [{
       label: 'Тенге за 1 руб.',
-      backgroundColor: 'rgb(255, 99, 132)',
-      borderColor: 'rgb(255, 99, 132)',
     }]
   };
 
@@ -42,34 +45,64 @@
   type: 'line',
   data: {
     datasets: [{
+      label: ' ₸ ',
       data: {
       {% for item in rows|reverse %}
-'{{item.date}}': {{item.exrate}},
+'{{item.date|date_format("%d.%m.%Y")}}': {{item.exrate}},
 {% endfor %}
       },
-      backgroundColor: 'rgb(255, 99, 132)',
-      borderColor: 'rgb(255, 99, 132)',
+      backgroundColor: 'rgb(198, 218, 252, 0.5)',
+      borderColor: 'rgb(66, 133, 244)',
+      fill: true,
+      tension:0.35,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      pointBackgroundColor: 'rgb(66, 133, 244)',
     }]
 },
   options: {
+    aspectRatio: 3.5,
     interaction: {
       intersect: false,
       mode: 'index',
     },
     plugins: {
+    filler: {
+        propagate: false,
+      },
       title: {
-        display: true,
+        display: false,
         text: (ctx) => 'Tooltip position mode: ' + ctx.chart.options.plugins.tooltip.position,
+      },
+      legend: {
+                display: false,
+            },
+      tooltip: {
+                enabled: true,
+                padding: 12,
+                titleFont: {
+                    size: 20
+                            },
+                bodyFont: {
+                    size: 20
+                            },
       },
     }
   }
 };
+
+
 </script>
 <script>
   const myChart = new Chart(
     document.getElementById('myChart'),
     config
   );
-</script>
+</script><br />
+<p style="font-size:14pt;">О проекте:<br />
+    Сервис автоматически забирает данные с официального сайта ПС "МИР". <br />
+    Данные обновляются раз в 4 часа.
+</p>
+<p style="font-size:13pt;">По вопросам и предложениям обращаться: <a href="https://t.me/pycarrot2">Telegram</a></p>
 </body>
 </html>
