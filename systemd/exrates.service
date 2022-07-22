@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn instance to serve exrates.geekcv.io
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/var/www/exrates-geekcv/exrates
+Environment="PATH=/var/www/exrates-geekcv/venv/bin"
+ExecStart=/var/www/exrates-geekcv/venv/bin/gunicorn --workers 2 --bind unix:exrates.sock -m 777 wsgi:app
+WatchdogSec=14400
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

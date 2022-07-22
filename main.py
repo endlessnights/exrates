@@ -5,7 +5,6 @@ from pip._internal.network.utils import HEADERS
 from pyquery import PyQuery as pq
 from flask import render_template
 from flask import Flask
-import json
 
 conn = sqlite3.connect('ratesdb')
 c = conn.cursor()
@@ -44,7 +43,6 @@ else:
         conn.close()
 
 app = Flask(__name__)
-app.testing = True
 
 
 @app.route('/')
@@ -52,6 +50,7 @@ def exratesview():
     conn = sqlite3.connect('ratesdb')
     c = conn.cursor()
     c.execute('SELECT date,exrate FROM exrates')
+    # получаем данные из таблицы БД в dict
     columns = [col[0] for col in c.description]
     rows = [dict(zip(columns, row)) for row in c.fetchall()]
     conn.commit()
@@ -63,4 +62,5 @@ def exratesview():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=4500)
+
