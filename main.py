@@ -5,6 +5,7 @@ from pip._internal.network.utils import HEADERS
 from pyquery import PyQuery as pq
 from flask import render_template
 from flask import Flask
+import json
 
 conn = sqlite3.connect('ratesdb')
 c = conn.cursor()
@@ -45,8 +46,7 @@ else:
 app = Flask(__name__)
 
 
-@app.route('/')
-def exratesview():
+def getdata(rows):
     conn = sqlite3.connect('ratesdb')
     c = conn.cursor()
     c.execute('SELECT date,exrate FROM exrates')
@@ -55,6 +55,12 @@ def exratesview():
     rows = [dict(zip(columns, row)) for row in c.fetchall()]
     conn.commit()
     conn.close()
+    return rows
+
+
+@app.route('/')
+def exratesview(*args):
+    rows = getdata(rows=args)
 
     def format_datetime(value, format="%d-%m-%Y"):
         if value is None:
@@ -65,9 +71,28 @@ def exratesview():
     app.jinja_env.filters['date_format'] = format_datetime
     return render_template(
         'index.html',
-        rows=rows)
+        rows=rows,
+    )
 
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4500)
 
+
+@app.route('/json')
+def getjsondata(*args):
+    rows = getdata(rows=args)
+    json_string = json.dumps(rows)
+    return render_template(
+        'source.json',
+        json_string=json_string,
+    )
+
+#
+# @app.route('/list')
+# def getlistdata(*args):
+#     rows = getdata(rows=args)
+#     return render_template(
+#         'list.txt',
+#         rows=rows,
+#     )
