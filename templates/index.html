@@ -47,7 +47,7 @@
     datasets: [{
       label: ' ₸ ',
       data: {
-      {% for item in rows|reverse %}
+      {% for item in rows %}
 '{{item.date|date_format("%d.%m.%Y")}}': {{item.exrate}},
 {% endfor %}
       },
