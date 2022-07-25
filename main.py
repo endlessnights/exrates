@@ -24,7 +24,8 @@ else:
     d = pq(resp.text)
     rate = d("td:contains('Казахстанский тенге')").parent().find("span").text().replace(',', '.')
     # получаем текущую дату гггг-мм-дд
-    date = str(date.today())
+    cdate = str(date.today())
+    print(cdate)
     print('Курс: ' + str(rate))
     # получаем обменный курс
     exrate = round((1 / float(rate)), 2)
@@ -39,7 +40,7 @@ else:
         c = conn.cursor()
         c.execute(
             'INSERT INTO "exrates" ("date", "rate", "exrate") VALUES("{}", "{}", "{}");'.format(
-                date, rate, exrate))
+                cdate, rate, exrate))
         conn.commit()
         conn.close()
 
@@ -61,6 +62,7 @@ def getdata(rows):
 @app.route('/')
 def exratesview(*args):
     rows = getdata(rows=args)
+    tdate = str(date.today().strftime("%d.%m.%Y"))
 
     def format_datetime(value, format="%d-%m-%Y"):
         if value is None:
@@ -72,6 +74,7 @@ def exratesview(*args):
     return render_template(
         'index.html',
         rows=rows,
+        tdate=tdate,
     )
 
 
