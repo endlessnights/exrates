@@ -7,28 +7,39 @@
     <meta charset="UTF-8">
     <title>График обменного курса Рубль>Тенге</title>
 </head>
+<style>
+    #num2, #sum, #btn{
+    font-size:13pt;
+    }
+</style>
 <body>
 {% for item in rows|reverse %}
 {% if loop.index <=1 %}
 <h3>
-    Сегодня {{tdate}}<br /><br />
+    Сегодня {{tdate}}<br/><br/>
     Курс от {{item.date|date_format("%d.%m.%Y")}}
 </h3>
 <h3>Текущий курс: <b style="letter-spacing: 2px;">{{item.exrate}}</b> тенге за 1 руб.</h3>
 <h3>Рассчет обменного курса</h3>
 <input type="text" id="num2" placeholder="Сумма в рублях"/> =
 <input type="text" id="sum" readonly="readonly"/>
-<input type="button" value="Рассчитать" onclick="calc()"/>
+<input type="submit" value="Рассчитать" id="btn" onclick="calc()"/>
 
 <script>
     function calc() {
         let num1 = {{item.exrate}};
         let num2 = Number(document.querySelector("#num2").value);
         let sum = num1 * num2;
+        sum = (sum).toFixed(2)
         document.getElementById("sum").value = sum;
     }
-
-
+    var input = document.getElementById("num2");
+    input.addEventListener("keypress", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    document.getElementById("btn").click();
+  }
+});
 </script>
 {% endif %}
 {% endfor %}
@@ -46,6 +57,7 @@
   type: 'line',
   data: {
     datasets: [{
+      lineTension: 0.3,
       label: ' ₸ ',
       data: {
       {% for item in rows %}
@@ -55,17 +67,46 @@
       backgroundColor: 'rgb(198, 218, 252, 0.5)',
       borderColor: 'rgb(66, 133, 244)',
       fill: true,
-      tension:0.35,
       pointRadius: 5,
       pointHoverRadius: 8,
       pointBackgroundColor: 'rgb(66, 133, 244)',
-    }]
+    },
+    {
+      label: 'Dataset 2',
+      lineTension: 0.3,
+      data: {
+      {% for item in rows %}
+'{{item.date|date_format("%d.%m.%Y")}}': {{item.exrate}},
+{% endfor %}
+      },
+      borderColor: 'rgb(66, 133, 244)',
+      backgroundColor: 'rgb(198, 218, 252, 0.5)',
+      yAxisID: 'y1',
+    }
+    ]
 },
   options: {
     aspectRatio: 3.5,
     interaction: {
       intersect: false,
       mode: 'index',
+    },
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+
+        // grid line settings
+        grid: {
+          drawOnChartArea: false, // only want the grid lines for one axis to show up
+        },
+      },
     },
     plugins: {
     filler: {
@@ -91,17 +132,16 @@
     }
   }
 };
-
-
-</script>
-<script>
   const myChart = new Chart(
     document.getElementById('myChart'),
     config
   );
-</script><br />
-<p style="font-size:14pt;">О проекте:<br />
-    Сервис автоматически забирает данные с <a href="https://mironline.ru/support/list/kursy_mir/" target="_blank">официального сайта ПС "МИР".</a> <br />
+
+</script>
+<br/>
+<p style="font-size:14pt;">О проекте:<br/>
+    Сервис автоматически забирает данные с <a href="https://mironline.ru/support/list/kursy_mir/" target="_blank">официального
+        сайта ПС "МИР".</a> <br/>
     Данные обновляются раз в 4 часа.
 </p>
 <p style="font-size:13pt;">По вопросам и предложениям обращаться: <a href="https://t.me/pycarrot2">Telegram</a></p>
