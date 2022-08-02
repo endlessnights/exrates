@@ -31,8 +31,8 @@ else:
     exrate = round((1 / float(rate)), 2)
     print('Обменный курс: ' + str(exrate))
     # Проверяем совпадает ли последняя запись с текущим курсом
-    sqlcode = 'SELECT EXISTS(SELECT * FROM exrates WHERE exrate={} and date={} ORDER BY date DESC LIMIT 1)'
-    presence = (c.execute(sqlcode.format(exrate, cdate))).fetchone()
+    sqlexec = 'SELECT EXISTS(SELECT * FROM exrates WHERE id=(select max(id) from exrates) and exrate={} ORDER BY id DESC LIMIT 1)'
+    presence = (c.execute(sqlexec.format(exrate))).fetchone()
     print(presence)
     # Если не совпадает, записываем новое значение
     if str(presence) == '(0,)':
