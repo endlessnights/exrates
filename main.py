@@ -31,11 +31,12 @@ else:
     exrate = round((1 / float(rate)), 2)
     print('Обменный курс: ' + str(exrate))
     # Проверяем совпадает ли последняя запись с текущим курсом
-    presence = (c.execute('SELECT EXISTS(SELECT * FROM exrates WHERE exrate = {} LIMIT 1)'.format(exrate))).fetchone()
+    sqlcode = 'SELECT EXISTS(SELECT * FROM exrates WHERE exrate={} and date={} ORDER BY date DESC LIMIT 1)'
+    presence = (c.execute(sqlcode.format(exrate, cdate))).fetchone()
     print(presence)
     # Если не совпадает, записываем новое значение
     if str(presence) == '(0,)':
-        print('True')
+        print('Курс изменился')
         conn = sqlite3.connect('ratesdb')
         c = conn.cursor()
         c.execute(
@@ -43,6 +44,8 @@ else:
                 cdate, rate, exrate))
         conn.commit()
         conn.close()
+    else:
+        print('Курс не менялся')
 
 app = Flask(__name__)
 
