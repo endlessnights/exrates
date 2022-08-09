@@ -7,6 +7,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>График обменного курса Рубль>Тенге</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Y17F1LVVVY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-Y17F1LVVVY');
+</script>
 </head>
 <style>
     #num2, #sum, #btn{
@@ -87,7 +96,8 @@
     ]
 },
   options: {
-    aspectRatio: 3.5,
+    aspectRatio: 3.3,
+    responsive: true,
     interaction: {
       intersect: false,
       mode: 'index',
@@ -136,13 +146,26 @@
     document.getElementById('myChart'),
     config
   );
-
+console.log('Дата: '+'{{tdate}}')
+{% for item in rows|reverse %}
+{% if loop.index <=1 %}
+console.log('Курс с сайта ПС МИР: '+{{rate}})
+console.log('Конвертированный курс: '+{{item.exrate}})
+{% endif %}
+{% endfor %}
+console.log('Статус: '+'{{presence}} '+'{{status}}')
+console.log('')
+console.log('Ссылка: '+'{{uri}}')
+console.log('Ответ: '+'{{resp.status_code}}')
 </script>
 <br/>
-<p style="font-size:14pt;">О проекте:<br/>
+<p style="font-size:14pt;">О проекте:<br />
     Сервис автоматически забирает данные с <a href="https://mironline.ru/support/list/kursy_mir/" target="_blank">официального
-        сайта ПС "МИР".</a> <br/>
-    Данные обновляются раз в 4 часа.
+        сайта ПС "МИР".</a> <br />
+
+    Данные обновляются раз в 4 часа. <br />Формула {% for item in rows|reverse %}
+{% if loop.index <=1 %} 1 / {{rate}} ≈ {{item.exrate}}{% endif %}{% endfor %}<br />
+    <a href="https://github.com/endlessnights/exrates/commits/master" target="_blank">Обновления сервиса</a>
 </p>
 <p style="font-size:13pt;">По вопросам и предложениям обращаться: <a href="https://t.me/pycarrot2">Telegram</a></p>
 </body>

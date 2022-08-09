@@ -17,7 +17,8 @@ c.execute('''
 conn.commit()
 
 uri = 'https://mironline.ru/support/list/kursy_mir/'
-resp = requests.get(uri, headers=HEADERS)
+resp = requests.get(uri, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+print(resp)
 if not resp.ok:
     pass
 else:
@@ -36,7 +37,8 @@ else:
     print(presence)
     # Если не совпадает, записываем новое значение
     if str(presence) == '(0,)':
-        print('Курс изменился')
+        status = 'Курс изменился'
+        print(status)
         conn = sqlite3.connect('ratesdb')
         c = conn.cursor()
         c.execute(
@@ -45,7 +47,8 @@ else:
         conn.commit()
         conn.close()
     else:
-        print('Курс не менялся')
+        status = 'Курс не изменился'
+        print(status)
 
 app = Flask(__name__)
 
@@ -78,11 +81,16 @@ def exratesview(*args):
         'index.html',
         rows=rows,
         tdate=tdate,
+        rate=rate,
+        presence=presence,
+        status=status,
+        uri=uri,
+        resp=resp,
     )
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=4500)
+    app.run(host='0.0.0.0')
 
 
 @app.route('/json')
@@ -94,11 +102,3 @@ def getjsondata(*args):
         json_string=json_string,
     )
 
-#
-# @app.route('/list')
-# def getlistdata(*args):
-#     rows = getdata(rows=args)
-#     return render_template(
-#         'list.txt',
-#         rows=rows,
-#     )
