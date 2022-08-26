@@ -21,6 +21,11 @@
     #num2, #sum, #btn{
     font-size:13pt;
     }
+    .border-donate{
+    border-left: 5px solid #4285F4;
+    border-radius: 10px 0px 0px 10px;
+    padding:10px;
+    }
 </style>
 <body>
 {% for item in rows|reverse %}
@@ -165,8 +170,10 @@ console.log('Ответ: '+'{{resp.status_code}}')
 
     Данные обновляются раз в 4 часа. <br />Формула {% for item in rows|reverse %}
 {% if loop.index <=1 %} 1 / {{rate}} ≈ {{item.exrate}}{% endif %}{% endfor %}<br />
-    <a href="https://github.com/endlessnights/exrates/commits/master" target="_blank">Обновления сервиса</a>
+<!--    <a href="https://github.com/endlessnights/exrates/commits/master" target="_blank">Обновления сервиса</a>-->
 </p>
+<p style="font-size:13pt;" class="border-donate">Хотите отблагодарить разработчика, сделайте добровольное пожертвование:<br />
+Kaspi: +7 705 568 50 30 (Bakhti B.)</p>
 <p style="font-size:13pt;">По вопросам и предложениям обращаться: <a href="https://t.me/pycarrot2">Telegram</a></p>
 </body>
 </html>
