@@ -10,12 +10,12 @@ docker run -it -d -p 8080:5000 legeminus/exrates \
 \
 Then create **NGINX configuration** file to proxy 8080 to 80 on domain name: \
 nano /etc/nginx/sites-available/exrates-docker \
-server {
-    listen 80;
-    server_name example.com;
-    location / {
-        proxy_pass http://127.0.01:8080;
-}
+server { \
+    listen 80; \
+    server_name example.com; \
+    location / { \
+        proxy_pass http://127.0.01:8080; \
+} \
 }
 \
 Make symb-link: \
