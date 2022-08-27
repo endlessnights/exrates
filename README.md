@@ -1,4 +1,5 @@
 # exrates
+Parses https://mironline.ru/support/list/kursy_mir/ and getting Kazakhstan's exchange rate from Russian Ruble to KZT (Tenge) \
 
 Pull Docker image: \
 docker pull legeminus/exrates
