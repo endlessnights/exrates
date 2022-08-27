@@ -21,3 +21,7 @@ server {
 Make symb-link: \
 sudo ln -s /etc/nginx/sites-available/exrates-docker /etc/nginx/sites-enabled/ \
 Then run **CERTBOT** to get SSL-certificate to your domain name.
+
+We need to restart Docker container every 2 hours, then create CRON task: \
+sudo crontab -e  \
+*/120 * * * * docker restart <docker-container-ID>
