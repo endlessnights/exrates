@@ -1,11 +1,12 @@
 import sqlite3
 from datetime import date, datetime
 import requests as requests
-from pip._internal.network.utils import HEADERS
 from pyquery import PyQuery as pq
 from flask import render_template
 from flask import Flask
 import json
+
+app = Flask(__name__)
 
 conn = sqlite3.connect('ratesdb')
 c = conn.cursor()
@@ -50,8 +51,6 @@ else:
         status = 'Курс не изменился'
         print(status)
 
-app = Flask(__name__)
-
 
 def getdata(rows):
     conn = sqlite3.connect('ratesdb')
@@ -65,8 +64,8 @@ def getdata(rows):
     return rows
 
 
-@app.route('/')
-def exratesview(*args):
+@app.route("/")
+def exrates(*args):
     rows = getdata(rows=args)
     tdate = str(date.today().strftime("%d.%m.%Y"))
 
@@ -89,16 +88,5 @@ def exratesview(*args):
     )
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0')
-
-
-@app.route('/json')
-def getjsondata(*args):
-    rows = getdata(rows=args)
-    json_string = json.dumps(rows)
-    return render_template(
-        'source.json',
-        json_string=json_string,
-    )
-
+if __name__ == "__main__":
+    app.run(port=5000, host="0.0.0.0")
