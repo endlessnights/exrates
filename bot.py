@@ -35,6 +35,8 @@ def getmirkurs():
 
 
 whitelist = [326070831, -1001854765380]
+
+# print(type(whitelist))
 # newexrate = '''Новый обменный курс МИР!
 # {}'''.format(getmirkurs())
 
