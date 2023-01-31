@@ -5,9 +5,21 @@ from datetime import date, datetime
 import telebot
 import time
 
-# api_token = '5956191624:AAHw268WZP_apCbj9aDUc6wAFE9uyEd4B0o' # test bot @test239botbot
-api_token = '6173204610:AAEVmFTmk-b3-UdjlUqHFyyFvVbI6va6Ymg'  # production bot @mirexratebot
+api_token = '5956191624:AAHw268WZP_apCbj9aDUc6wAFE9uyEd4B0o'  # test bot @test239botbot
+# api_token = '6173204610:AAEVmFTmk-b3-UdjlUqHFyyFvVbI6va6Ymg'  # production bot @mirexratebot
 bot = telebot.TeleBot(api_token)
+users = []
+
+# Connect to the database
+conn = sqlite3.connect('botusers.db')
+c = conn.cursor()
+# Create a table to store user information
+c.execute('''
+            CREATE TABLE IF NOT EXISTS botusers
+            ([chat_id] INTEGER PRIMARY KEY, [username] TEXT)
+            ''')
+conn.commit()
+conn.close()
 
 
 def getmirkurs():
@@ -30,7 +42,7 @@ def getmirkurs():
     curdate = datetime.strptime(curdate, '%Y-%m-%d')
     curdate = datetime.strftime(curdate, '%d %B %Y')
     result = '''Сегодня {}
-Курс от {} - {} тенге за 1 руб'''.format(curdate, ratedate, rate)
+1 RUB = {} Тенге (Курс от {})'''.format(curdate, rate, ratedate)
     result2 = '''Сегодня {}'''.format(curdate)
     return result, result2
 
@@ -51,22 +63,43 @@ def hellouser(message):
 ✅ Показывает в большую или меньшую сторону изменился курс.
 ✅ Может работать как в ЛС, так и в приватных/публичных группах.
 
-Доступ к боту платный: 100 тг/мес за пользователя, 2000 тг/мес для группы.
 Чтобы начать работу с ботом, нажмите /kursmir''')
+    currentuser = message.chat.id
+    userinfo = message.from_user
+    # user_info = (message.chat.id, message.chat.username, currentuser.first_name, currentuser.last_name)
+    if not str(currentuser).startswith('-'):
+        conn = sqlite3.connect('botusers.db')
+        c = conn.cursor()
+        c.execute(
+            'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("{}", "{}");'.format(userinfo.id, userinfo.username))
+        conn.commit()
+        conn.close()
 
 
 @bot.message_handler(commands=['kursmir'])
 def mirexrate(message):
-    user = message.chat.id
+    user = message.chat.id  # Текущий ID чата/пользователя
     result = getmirkurs()
     a, b = result
-    if user in whitelist:
-        bot.send_message(message.chat.id, text=a)
+    if str(user).startswith('-'):   # проверяем, если текущий пользователь - чат/группа
+        if user in whitelist:   # и -ID чата/группы есть в списке
+            bot.send_message(message.chat.id, text=a)
+        else:
+            bot.send_message(message.chat.id, text='''У данного нет доступа к этому боту,
+Если вы считаете, что это ошибка,
+пожалуйста, сообщите Ваш ID {} администратору боту: @pycarrot2.
+Доступ для чатов платный - 2000 тг/мес'''.format(user))
     else:
-        print(whitelist)
-        bot.send_message(message.chat.id, text='''У вас нет доступа к этому боту, 
-Если вы считаете, что это ошибка, 
-пожалуйста, сообщите Ваш ID {} администратору боту: @pycarrot2.'''.format(user))
+        bot.send_message(message.chat.id, text=a)   # если текущий пользователь - человек, отправляем ответ
+        userinfo = message.from_user
+        conn = sqlite3.connect('botusers.db')
+        c = conn.cursor()
+        c.execute(
+            'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("{}", "{}");'.format(userinfo.id,
+                                                                                                  userinfo.username))
+        conn.commit()
+        conn.close()
+    return user
 
 
 conn = sqlite3.connect('ratesdb')
@@ -83,6 +116,17 @@ current_record_count = c.fetchone()[0]
 print(current_record_count)
 c.close()
 
+
+def getusersfromdb():
+    conn = sqlite3.connect('botusers.db')
+    c = conn.cursor()
+    c.execute('SELECT chat_id FROM botusers')
+    chat_ids = [chat_id[0] for chat_id in c.fetchall()]
+    conn.close()
+
+    return chat_ids
+
+
 with open("linecount.txt", "r") as f:
     previous_record_count = int(f.read())
 with open("exrate.txt", "r") as frate:  # test
@@ -90,7 +134,7 @@ with open("exrate.txt", "r") as frate:  # test
 if current_record_count > previous_record_count:
     print("New database entry added")
     c, d = getmirkurs()
-    print('D:', d)
+    chat_ids = getusersfromdb()
     for chat in whitelist:
         if rate > previous_rate:  # test
             bot.send_message(chat_id=chat, text='''Новый обменный курс МИР!
@@ -100,6 +144,15 @@ if current_record_count > previous_record_count:
             bot.send_message(chat_id=chat, text='''Новый обменный курс МИР!
 {}
 🔻{} тенге за 1 руб'''.format(d, rate))  # test
+    for chat_id in chat_ids:
+        if rate > previous_rate:  # test
+            bot.send_message(chat_id=chat_id, text='''Новый обменный курс МИР!
+        {}
+        🔺{} тенге за 1 руб'''.format(d, rate))  # test
+        else:  # test
+            bot.send_message(chat_id=chat_id, text='''Новый обменный курс МИР!
+        {}
+        🔻{} тенге за 1 руб'''.format(d, rate))  # test
     with open("linecount.txt", "w") as f:
         f.write(str(current_record_count))
     with open("exrate.txt", "w") as frate:  # test
