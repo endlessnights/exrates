@@ -189,7 +189,18 @@ def main():
         chat_ids = getusersfromdb()
         rate_prefix = "🔺" if rate > previous_rate else "🔻"
         message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
-        send_message_to_chats(message, whitelist, chat_ids)
+        try:
+            send_message_to_chats(message, whitelist, chat_ids)
+        except telebot.apihelper.ApiTelegramException as e:
+            if e.result.status_code == 400:
+                if 'chat not found' in e.result.description:
+                    print("Bad Request: chat not found")
+                elif 'not enough rights' in e.result.description:
+                    print("Bad Request: not enough rights to send text messages to the chat")
+                else:
+                    raise e
+            else:
+                raise e
         write_to_file("linecount.txt", current_record_count)
         write_to_file("exrate.txt", rate)
 
