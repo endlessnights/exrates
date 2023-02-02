@@ -192,10 +192,15 @@ def main():
         try:
             send_message_to_chats(message, whitelist, chat_ids)
         except telebot.apihelper.ApiTelegramException as e:
-            if e.result.status_code == 400:
-                if 'chat not found' in e.result.description:
+            if e.result.status_code == 403:
+                if 'bot was blocked by the user' in e.description:
+                    print("Forbidden: bot was blocked by the user")
+                else:
+                    raise e
+            elif e.result.status_code == 400:
+                if 'chat not found' in e.description:
                     print("Bad Request: chat not found")
-                elif 'not enough rights' in e.result.description:
+                elif 'not enough rights' in e.description:
                     print("Bad Request: not enough rights to send text messages to the chat")
                 else:
                     raise e
