@@ -229,6 +229,7 @@ def main():
                         raise e
                 else:
                     raise e
+            time.sleep(1)
         write_to_file("linecount.txt", current_record_count)
         write_to_file("exrate.txt", rate)
 
