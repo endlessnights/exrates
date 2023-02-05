@@ -115,7 +115,6 @@ supporttext = '''
 5395 4574 1465 0022 - Jusan, Bakhti B.
 2200 1502 3169 8355 - Альфа-Банк МИР (РФ)
 4584 4328 4064 9595 - Альфа-Банк (РФ)
-
 ️'''
 
 
@@ -166,11 +165,9 @@ print(current_record_count)
 c.close()
 
 
-def send_message_to_chats(text, chats, chat_ids):
+def send_message_to_chats(text, chats):
     for chat in chats:
         bot.send_message(chat_id=chat, text=text)
-    for chat_id in chat_ids:
-        bot.send_message(chat_id=chat_id, text=text)
 
 
 def write_to_file(filename, data):
@@ -192,23 +189,46 @@ def main():
         chat_ids = getusersfromdb()
         rate_prefix = "🔺" if rate > previous_rate else "🔻"
         message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
-        try:
-            send_message_to_chats(message, whitelist, chat_ids)
-        except telebot.apihelper.ApiTelegramException as e:
-            if e.result.status_code == 403:
-                if 'bot was blocked by the user' in e.description:
-                    print("Forbidden: bot was blocked by the user")
+        for chat in whitelist:
+            try:
+                bot.send_message(chat_id=chat, text=message)
+            except telebot.apihelper.ApiTelegramException as e:
+                if e.result.status_code == 403:
+                    if 'bot was blocked by the user' in e.description:
+                        print("Forbidden: bot was blocked by the group chat", chat)
+                    elif 'bot was kicked from the group chat' in e.description:
+                        print("Forbidden: bot was kicked from the group chat", chat)
+                    else:
+                        raise e
+                elif e.result.status_code == 400:
+                    if 'chat not found' in e.description:
+                        print("Bad Request: group chat not found", chat)
+                    elif 'not enough rights' in e.description:
+                        print("Bad Request: not enough rights to send text messages to the group chat", chat)
+                    else:
+                        raise e
                 else:
                     raise e
-            elif e.result.status_code == 400:
-                if 'chat not found' in e.description:
-                    print("Bad Request: chat not found")
-                elif 'not enough rights' in e.description:
-                    print("Bad Request: not enough rights to send text messages to the chat")
+        for item in chat_ids:
+            try:
+                bot.send_message(chat_id=item, text=message)
+            except telebot.apihelper.ApiTelegramException as e:
+                if e.result.status_code == 400:
+                    if 'chat not found' in e.description:
+                        print("Bad Request: user not found", item)
+                    elif 'not enough rights' in e.description:
+                        print("Bad Request: not enough rights to send text messages to the user", item)
+                    else:
+                        raise e
+                elif e.result.status_code == 403:
+                    if 'bot was blocked by the user' in e.description:
+                        print("Forbidden: bot was blocked by the user", item)
+                    elif 'bot was kicked from the group chat' in e.description:
+                        print("Forbidden: bot was kicked from the user", item)
+                    else:
+                        raise e
                 else:
                     raise e
-            else:
-                raise e
         write_to_file("linecount.txt", current_record_count)
         write_to_file("exrate.txt", rate)
 
