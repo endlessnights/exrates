@@ -15,6 +15,8 @@ addusertodb = 'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("
 
 getlastrate = 'SELECT * FROM exrates WHERE id=(select max(id) from exrates) ORDER BY id DESC LIMIT 1'
 
+adminsecretcode = '8iY.jrM9$d3(%'
+
 starttext = '''Привет!
 Функционал бота:
 

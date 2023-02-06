@@ -50,13 +50,6 @@ def getmirkurs():
     return result, result2
 
 
-
-# Белый список пользователей и чатов, которые могут пользоваться ботом
-with open("whitelist.txt", "r") as fwl:
-    whiteliststr = str(fwl.read())
-    whitelist = json.loads(whiteliststr)
-
-
 def getchatidsfromdb():
     conn = sqlite3.connect('botusers.db')
     c = conn.cursor()
@@ -126,6 +119,33 @@ def mirexrate(message):
     return user
 
 
+adminuser = 326070831
+
+
+@bot.message_handler(commands=['admin'])
+def admintools(message):
+    if message.chat.id == adminuser:
+        try:
+            getcode = bot.send_message(adminuser, text='Send me current Secret Code')
+            bot.register_next_step_handler(getcode, secretcodecheck)
+        except telebot.apihelper.ApiTelegramException as e:
+            func.catcherrors(e, adminuser)
+
+
+def secretcodecheck(message):
+    adminmsg = message.text
+    if adminmsg == config.adminsecretcode:
+        try:
+            bot.send_message(adminuser, text='PASSED!')
+        except telebot.apihelper.ApiTelegramException as e:
+            func.catcherrors(e, adminuser)
+    else:
+        try:
+            bot.send_message(adminuser, text='Password incorrect!')
+        except telebot.apihelper.ApiTelegramException as e:
+            func.catcherrors(e, adminuser)
+
+
 conn = sqlite3.connect('ratesdb')
 c = conn.cursor()
 c.execute(config.getlastrate)
@@ -139,11 +159,6 @@ c.execute("SELECT COUNT(*) FROM exrates")
 current_record_count = c.fetchone()[0]
 print(current_record_count)
 c.close()
-
-
-def send_message_to_chats(text, chats):
-    for chat in chats:
-        bot.send_message(chat_id=chat, text=text)
 
 
 def write_to_file(filename, data):
@@ -165,13 +180,7 @@ def main():
         user_ids, group_ids = getchatidsfromdb()
         rate_prefix = "🔺" if rate > previous_rate else "🔻"
         message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
-        for chat in group_ids:
-            try:
-                bot.send_message(chat_id=chat, text=message)
-            except telebot.apihelper.ApiTelegramException as e:
-                func.catcherrors(e, chat)
-            time.sleep(2)
-        for chat in user_ids:
+        for chat in group_ids + user_ids:
             try:
                 bot.send_message(chat_id=chat, text=message)
             except telebot.apihelper.ApiTelegramException as e:
