@@ -1,10 +1,12 @@
 import json
 import locale
 import sqlite3
+import wave
 from datetime import date, datetime
 import telebot
 from telebot import types
 import time
+import config, func
 
 api_token = '5956191624:AAHw268WZP_apCbj9aDUc6wAFE9uyEd4B0o'  # test bot @test239botbot
 # api_token = '6173204610:AAEVmFTmk-b3-UdjlUqHFyyFvVbI6va6Ymg'  # production bot @mirexratebot
@@ -15,10 +17,10 @@ users = []
 conn = sqlite3.connect('botusers.db')
 c = conn.cursor()
 # Create a table to store user information
-c.execute('''
-            CREATE TABLE IF NOT EXISTS botusers
-            ([chat_id] INTEGER PRIMARY KEY, [username] TEXT)
-            ''')
+c.execute(config.createuserstable)
+conn.commit()
+# Create a table to store Group information
+c.execute(config.creategroupstable)
 conn.commit()
 conn.close()
 
@@ -26,7 +28,7 @@ conn.close()
 def getmirkurs():
     conn = sqlite3.connect('ratesdb')
     c = conn.cursor()
-    c.execute('SELECT * FROM exrates WHERE id=(select max(id) from exrates) ORDER BY id DESC LIMIT 1')
+    c.execute(config.getlastrate)
     records = c.fetchall()
     columns = [col[0] for col in c.description]
     rows = [dict(zip(columns, row)) for row in c.fetchall()]
@@ -54,74 +56,42 @@ with open("whitelist.txt", "r") as fwl:
     whitelist = json.loads(whiteliststr)
 
 
-def getusersfromdb():
+def getchatidsfromdb():
     conn = sqlite3.connect('botusers.db')
     c = conn.cursor()
     c.execute('SELECT chat_id FROM botusers')
-    chat_ids = [chat_id[0] for chat_id in c.fetchall()]
+    user_ids = [chat_id[0] for chat_id in c.fetchall()]
+    c.execute('SELECT groupid FROM botgroups')
+    group_ids =[chat_id[0] for chat_id in c.fetchall()]
     conn.close()
 
-    return chat_ids
-
-
-starttext = '''Привет!
-Функционал бота:
-    
-✅ По запросу выдает актуальный курс МИР.
-✅ Автоматически присылает уведомления об изменении курса.
-✅ Показывает в большую или меньшую сторону изменился курс.
-✅ Может работать как в ЛС, так и в приватных/публичных группах.
-
-Чтобы начать работу с ботом, нажмите /kursmir'''
+    return user_ids, group_ids
 
 
 @bot.message_handler(commands=['start'])
 def hellouser(message):
     currentuser = message.chat.id
     userinfo = message.from_user
-    # user_info = (message.chat.id, message.chat.username, currentuser.first_name, currentuser.last_name)
     if not str(currentuser).startswith('-'):
         conn = sqlite3.connect('botusers.db')
         c = conn.cursor()
-        c.execute(
-            'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("{}", "{}");'.format(userinfo.id,
-                                                                                                  userinfo.username))
+        c.execute(config.addusertodb.format(userinfo.id, userinfo.username))
         conn.commit()
         conn.close()
-    chat_ids = getusersfromdb()
     currentuser = message.chat.id
     markup = types.InlineKeyboardMarkup()
     button = types.InlineKeyboardButton(text='💰 Поддержать автора и проект', callback_data='send_message')
     markup.add(button)
     if str(currentuser).startswith('-'):
-        bot.send_message(chat_id=message.chat.id, text=starttext)
+        bot.send_message(chat_id=message.chat.id, text=config.starttext)
     else:
-        bot.send_message(message.chat.id, text=starttext, reply_markup=markup)
-
-
-supporttext = '''
-Привет! Меня зовут Бахти Б. @pycarrot2 и 
-Вы можете поддержать меня и мои проекты, о которых вы возможно слышали:
-❇️ Данный бот обменного курса МИР тенге-руб
-❇️ Сайт exrates.geekcv.io
-❇️ Сайт-портал MeetKZ.com
-❇️ Сайты, ранее актуальные в период мобилизации:
-1. kpp.geekcv.io
-2. bnb.geekcv.io
-❇️ Бот выдачи настроек VPN @Vas3kVPNbot
-
-Реквизиты:
-4400 4301 0402 9738 - Kaspi, Bakhti B.
-5395 4574 1465 0022 - Jusan, Bakhti B.
-2200 1502 3169 8355 - Альфа-Банк МИР (РФ)
-4584 4328 4064 9595 - Альфа-Банк (РФ)
-️'''
+        bot.send_message(message.chat.id, text=config.starttext, reply_markup=markup)
 
 
 @bot.callback_query_handler(func=lambda c: c.data == 'send_message')
 def callback_handler(callback_query):
     bot.answer_callback_query(callback_query.id)
-    bot.send_message(chat_id=callback_query.message.chat.id, text=supporttext)
+    bot.send_message(chat_id=callback_query.message.chat.id, text=config.supporttext)
 
 
 @bot.message_handler(commands=['kursmir'])
@@ -129,30 +99,35 @@ def mirexrate(message):
     user = message.chat.id  # Текущий ID чата/пользователя
     result = getmirkurs()
     a, b = result
+    user_ids, group_ids = getchatidsfromdb()
     if str(user).startswith('-'):  # проверяем, если текущий пользователь - чат/группа
-        if user in whitelist:  # и -ID чата/группы есть в списке
-            bot.send_message(message.chat.id, text=a)
+        if user in group_ids:  # и -ID чата/группы есть в списке
+            try:
+                bot.send_message(message.chat.id, text=a)
+            except telebot.apihelper.ApiTelegramException as e:
+                func.catcherrors(e, user)
         else:
-            bot.send_message(message.chat.id, text='''У данного нет доступа к этому боту,
-Если вы считаете, что это ошибка,
-пожалуйста, сообщите Ваш ID {} администратору боту: @pycarrot2.
-Доступ для чатов платный - 2000 тг/мес'''.format(user))
+            try:
+                bot.send_message(message.chat.id, text=config.noaccesstext.format(user))
+            except telebot.apihelper.ApiTelegramException as e:
+                func.catcherrors(e, user)
     else:
-        bot.send_message(message.chat.id, text=a)  # если текущий пользователь - человек, отправляем ответ
-        userinfo = message.from_user
-        conn = sqlite3.connect('botusers.db')
-        c = conn.cursor()
-        c.execute(
-            'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("{}", "{}");'.format(userinfo.id,
-                                                                                                  userinfo.username))
-        conn.commit()
-        conn.close()
+        try:
+            bot.send_message(message.chat.id, text=a)  # если текущий пользователь - человек, отправляем ответ
+            userinfo = message.from_user
+            conn = sqlite3.connect('botusers.db')
+            c = conn.cursor()
+            c.execute(config.addusertodb.format(userinfo.id, userinfo.username))
+            conn.commit()
+            conn.close()
+        except telebot.apihelper.ApiTelegramException as e:
+            func.catcherrors(e, user)
     return user
 
 
 conn = sqlite3.connect('ratesdb')
 c = conn.cursor()
-c.execute('SELECT * FROM exrates WHERE id=(select max(id) from exrates) ORDER BY id DESC LIMIT 1')
+c.execute(config.getlastrate)
 records = c.fetchall()
 columns = [col[0] for col in c.description]
 rows = [dict(zip(columns, row)) for row in c.fetchall()]
@@ -186,50 +161,21 @@ def main():
     if current_record_count > previous_record_count:
         print("New database entry added")
         c, d = getmirkurs()
-        chat_ids = getusersfromdb()
+        user_ids, group_ids = getchatidsfromdb()
         rate_prefix = "🔺" if rate > previous_rate else "🔻"
         message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
-        try:
-            for chat in whitelist:
-                bot.send_message(chat_id=chat, text=message)
-        except telebot.apihelper.ApiTelegramException as e:
-            if e.result.status_code == 403:
-                if 'bot was blocked by the user' in e.description:
-                    print("Forbidden: bot was blocked by the group chat", chat)
-                elif 'bot was kicked from the group chat' in e.description:
-                    print("Forbidden: bot was kicked from the group chat", chat)
-                else:
-                    raise e
-            elif e.result.status_code == 400:
-                if 'chat not found' in e.description:
-                    print("Bad Request: group chat not found", chat)
-                elif 'not enough rights' in e.description:
-                    print("Bad Request: not enough rights to send text messages to the group chat", chat)
-                else:
-                    raise e
-            else:
-                raise e
-        for item in chat_ids:
+        for chat in group_ids:
             try:
-                bot.send_message(chat_id=item, text=message)
+                bot.send_message(chat_id=chat, text=message)
             except telebot.apihelper.ApiTelegramException as e:
-                if e.result.status_code == 400:
-                    if 'chat not found' in e.description:
-                        print("Bad Request: user not found", item)
-                    elif 'not enough rights' in e.description:
-                        print("Bad Request: not enough rights to send text messages to the user", item)
-                    else:
-                        raise e
-                elif e.result.status_code == 403:
-                    if 'bot was blocked by the user' in e.description:
-                        print("Forbidden: bot was blocked by the user", item)
-                    elif 'bot was kicked from the group chat' in e.description:
-                        print("Forbidden: bot was kicked from the user", item)
-                    else:
-                        raise e
-                else:
-                    raise e
-            time.sleep(1)
+                func.catcherrors(e, chat)
+            time.sleep(2)
+        for chat in user_ids:
+            try:
+                bot.send_message(chat_id=chat, text=message)
+            except telebot.apihelper.ApiTelegramException as e:
+                func.catcherrors(e, chat)
+            time.sleep(2)
         write_to_file("linecount.txt", current_record_count)
         write_to_file("exrate.txt", rate)
 
