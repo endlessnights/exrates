@@ -50,6 +50,7 @@ def getmirkurs():
     return result, result2
 
 
+
 # Белый список пользователей и чатов, которые могут пользоваться ботом
 with open("whitelist.txt", "r") as fwl:
     whiteliststr = str(fwl.read())
