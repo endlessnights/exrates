@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS botgroups
 ([id] INTEGER PRIMARY KEY ,[groupid] BIGINT UNIQUE, [name] TEXT, [link] TEXT)
 '''
 
-addgroup = 'INSERT OR IGNORE INTO "botgroups" ("groupid", "name", "link") VALUES("{}", "{}", "{}")'
+addgroup = 'INSERT OR IGNORE INTO "botgroups" ("groupid", "name", "link") VALUES("{}", "{}", "{}");'
+
+removegroup = 'DELETE FROM botgroups WHERE groupid="{}";'
 
 addusertodb = 'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("{}", "{}");'
 

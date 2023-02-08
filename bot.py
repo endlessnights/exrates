@@ -56,7 +56,7 @@ def getchatidsfromdb():
     c.execute('SELECT chat_id FROM botusers')
     user_ids = [chat_id[0] for chat_id in c.fetchall()]
     c.execute('SELECT groupid FROM botgroups')
-    group_ids =[chat_id[0] for chat_id in c.fetchall()]
+    group_ids = [chat_id[0] for chat_id in c.fetchall()]
     conn.close()
 
     return user_ids, group_ids
@@ -149,6 +149,7 @@ def secretcodecheck(message):
             func.catcherrors(e, adminuser)
 
 
+# Выводим список групп из белого списка и рисуем две кнопки - Добавить и удалить группы
 @bot.callback_query_handler(func=lambda c: c.data == 'grouplist')
 def callback_handler(callback_query):
     addgroupbtn = types.InlineKeyboardButton(text='Добавить группу', callback_data='addgroup')
@@ -164,22 +165,32 @@ def callback_handler(callback_query):
     c.close()
     for row in rows:
         pkid, gid, gname, glink = row
-        bot.send_message(chat_id=callback_query.message.chat.id, text='PK {}, ID {}, Name {}, Link {}'.format(pkid, gid, gname, glink))
+        bot.send_message(chat_id=callback_query.message.chat.id,
+                         text='PK {}, ID {}, Name {}, Link {}'.format(pkid, gid, gname, glink))
         time.sleep(0.5)
     bot.send_message(chat_id=callback_query.message.chat.id, text='Выбери действие', reply_markup=markup)
 
 
+# Получаем данные от админа для добавления новой группы
 @bot.callback_query_handler(func=lambda c: c.data == 'addgroup')
 def callback_handler(callback_query):
-    getnewgid = bot.send_message(chat_id=callback_query.message.chat.id, text='''Отправь данные по маске:
--ID, Название группы , @группы или ссылка''')
-    bot.register_next_step_handler(getnewgid, newgdata)
+    addgroup = bot.send_message(chat_id=callback_query.message.chat.id, text='''Чтобы добавить НОВУЮ группу, отправь 
+    данные по маске: -ID, Название группы , @группы или ссылка''')
+    bot.register_next_step_handler(addgroup, groupadd)
 
 
-def newgdata(message):
+# Получаем данные от админа для удаления группы
+@bot.callback_query_handler(func=lambda c: c.data == 'removegroup')
+def callback_handler(callback_query):
+    removegroup = bot.send_message(chat_id=callback_query.message.chat.id, text='Чтобы УДАЛИТЬ группу, отправь ID '
+                                                                                'группы')
+    bot.register_next_step_handler(removegroup, groupremove)
+
+
+# Добавление новой группы через кнопку
+def groupadd(message):
     data = message.text
     newgid, newgname, newglink = data.split(',')
-    print(newgid, newgname, newglink)
     conn = sqlite3.connect('botusers.db')
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM botgroups")
@@ -192,9 +203,28 @@ def newgdata(message):
     conn.commit()
     c.close()
     if gcountold != gcountcur:
-        bot.send_message(chat_id=adminuser, text='Добавлена новая группа {} с ID {} и ссылкой {}'.format(newgname, newgid, newglink))
+        bot.send_message(chat_id=adminuser,
+                         text='Добавлена новая группа {} с ID {} и ссылкой {}'.format(newgname, newgid, newglink))
     else:
         bot.send_message(chat_id=adminuser, text='Что-то пошло не так')
+
+
+def groupremove(message):
+    data = message.text
+    conn = sqlite3.connect('botusers.db')
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM botgroups")
+    time.sleep(0.25)
+    gcountold = c.fetchone()[0]
+    c.execute(config.removegroup.format(data))
+    conn.commit()
+    c.execute("SELECT COUNT(*) FROM botgroups")
+    gcountcur = c.fetchone()[0]
+    if gcountold > gcountcur:
+        bot.send_message(chat_id=adminuser, text='Группа с ID {} успешно удалена'.format(data))
+    else:
+        bot.send_message(chat_id=adminuser, text='Что-то пошло не так')
+    c.close()
 
 
 conn = sqlite3.connect('ratesdb')
