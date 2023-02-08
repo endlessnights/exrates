@@ -134,9 +134,12 @@ def admintools(message):
 
 def secretcodecheck(message):
     adminmsg = message.text
+    markup = types.InlineKeyboardMarkup()
+    button = types.InlineKeyboardButton(text='Список групп', callback_data='grouplist')
+    markup.add(button)
     if adminmsg == config.adminsecretcode:
         try:
-            bot.send_message(adminuser, text='PASSED!')
+            passgood = bot.send_message(adminuser, text='PASSED!', reply_markup=markup)
         except telebot.apihelper.ApiTelegramException as e:
             func.catcherrors(e, adminuser)
     else:
@@ -144,6 +147,54 @@ def secretcodecheck(message):
             bot.send_message(adminuser, text='Password incorrect!')
         except telebot.apihelper.ApiTelegramException as e:
             func.catcherrors(e, adminuser)
+
+
+@bot.callback_query_handler(func=lambda c: c.data == 'grouplist')
+def callback_handler(callback_query):
+    addgroupbtn = types.InlineKeyboardButton(text='Добавить группу', callback_data='addgroup')
+    removegroupbtn = types.InlineKeyboardButton(text='Удалить группу', callback_data='removegroup')
+    markup = types.InlineKeyboardMarkup()
+    markup.add(addgroupbtn)
+    markup.add(removegroupbtn)
+    bot.answer_callback_query(callback_query.id)
+    conn = sqlite3.connect('botusers.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM botgroups')
+    rows = c.fetchall()
+    c.close()
+    for row in rows:
+        pkid, gid, gname, glink = row
+        bot.send_message(chat_id=callback_query.message.chat.id, text='PK {}, ID {}, Name {}, Link {}'.format(pkid, gid, gname, glink))
+        time.sleep(0.5)
+    bot.send_message(chat_id=callback_query.message.chat.id, text='Выбери действие', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda c: c.data == 'addgroup')
+def callback_handler(callback_query):
+    getnewgid = bot.send_message(chat_id=callback_query.message.chat.id, text='''Отправь данные по маске:
+-ID, Название группы , @группы или ссылка''')
+    bot.register_next_step_handler(getnewgid, newgdata)
+
+
+def newgdata(message):
+    data = message.text
+    newgid, newgname, newglink = data.split(',')
+    print(newgid, newgname, newglink)
+    conn = sqlite3.connect('botusers.db')
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM botgroups")
+    gcountold = c.fetchone()[0]
+    time.sleep(0.25)
+    c.execute((config.addgroup.format(newgid, newgname, newglink)))
+    time.sleep(0.25)
+    c.execute("SELECT COUNT(*) FROM botgroups")
+    gcountcur = c.fetchone()[0]
+    conn.commit()
+    c.close()
+    if gcountold != gcountcur:
+        bot.send_message(chat_id=adminuser, text='Добавлена новая группа {} с ID {} и ссылкой {}'.format(newgname, newgid, newglink))
+    else:
+        bot.send_message(chat_id=adminuser, text='Что-то пошло не так')
 
 
 conn = sqlite3.connect('ratesdb')

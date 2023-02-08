@@ -8,8 +8,10 @@ CREATE TABLE IF NOT EXISTS botusers
 # Create a table to store Group information
 creategroupstable = '''
 CREATE TABLE IF NOT EXISTS botgroups
-([id] INTEGER PRIMARY KEY ,[groupid] BIGINT, [name] TEXT, [link] TEXT)
+([id] INTEGER PRIMARY KEY ,[groupid] BIGINT UNIQUE, [name] TEXT, [link] TEXT)
 '''
+
+addgroup = 'INSERT OR IGNORE INTO "botgroups" ("groupid", "name", "link") VALUES("{}", "{}", "{}")'
 
 addusertodb = 'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("{}", "{}");'
 
