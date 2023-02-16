@@ -259,7 +259,7 @@ def main():
         print("New database entry added")
         c, d = getmirkurs()
         user_ids, group_ids = getchatidsfromdb()
-        rate_prefix = "🔺" if rate > previous_rate else "🔻"
+        rate_prefix = "🟢" if rate > previous_rate else "🔴"
         message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
         for chat in group_ids + user_ids:
             try:
