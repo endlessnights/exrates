@@ -1,12 +1,14 @@
-import json
 import locale
+import re
 import sqlite3
-import wave
+import time
 from datetime import date, datetime
+
 import telebot
 from telebot import types
-import time
-import config, func
+
+import config
+import func
 
 api_token = '5956191624:AAHw268WZP_apCbj9aDUc6wAFE9uyEd4B0o'  # test bot @test239botbot
 # api_token = '6173204610:AAEVmFTmk-b3-UdjlUqHFyyFvVbI6va6Ymg'  # production bot @mirexratebot
@@ -119,34 +121,35 @@ def mirexrate(message):
     return user
 
 
+@bot.message_handler(func=lambda message: message.text and "/admin" not in message.text)
+def handle_message(message):
+    if not message.chat.id == adminuser:
+        bot.reply_to(message, '''Я тебя не понял. Доступные команды:
+/start - перезапуск бота
+/kursmir - показать текущий обменный курс''')
+    else:
+        bot.reply_to(message, '''Я тебя не понял. Доступные команды:
+/start - перезапуск бота
+/kursmir - показать текущий обменный курс
+/admin - Администрирование бота''')
+
+
 adminuser = 326070831
 
 
 @bot.message_handler(commands=['admin'])
 def admintools(message):
     if message.chat.id == adminuser:
-        try:
-            getcode = bot.send_message(adminuser, text='Send me current Secret Code')
-            bot.register_next_step_handler(getcode, secretcodecheck)
-        except telebot.apihelper.ApiTelegramException as e:
-            func.catcherrors(e, adminuser)
-
-
-def secretcodecheck(message):
-    adminmsg = message.text
-    markup = types.InlineKeyboardMarkup()
-    button = types.InlineKeyboardButton(text='Список групп', callback_data='grouplist')
-    markup.add(button)
-    if adminmsg == config.adminsecretcode:
-        try:
-            passgood = bot.send_message(adminuser, text='PASSED!', reply_markup=markup)
-        except telebot.apihelper.ApiTelegramException as e:
-            func.catcherrors(e, adminuser)
-    else:
-        try:
-            bot.send_message(adminuser, text='Password incorrect!')
-        except telebot.apihelper.ApiTelegramException as e:
-            func.catcherrors(e, adminuser)
+        markup = types.InlineKeyboardMarkup()
+        grouplistbtn = types.InlineKeyboardButton(text='📋 Список групп', callback_data='grouplist')
+        statsbtn = types.InlineKeyboardButton(text='👥 Показать статистику', callback_data='showstats')
+        addgroupbtn = types.InlineKeyboardButton(text='➕ Добавить группу', callback_data='addgroup')
+        removegroupbtn = types.InlineKeyboardButton(text='➖ Удалить группу', callback_data='removegroup')
+        markup.add(grouplistbtn)
+        markup.add(addgroupbtn)
+        markup.add(removegroupbtn)
+        markup.add(statsbtn)
+        bot.send_message(chat_id=adminuser, text='Администрирование бота', reply_markup=markup)
 
 
 # Выводим список групп из белого списка и рисуем две кнопки - Добавить и удалить группы
@@ -163,12 +166,33 @@ def callback_handler(callback_query):
     c.execute('SELECT * FROM botgroups')
     rows = c.fetchall()
     c.close()
+    grouplist = ''
+    gloopcount = 0
     for row in rows:
         pkid, gid, gname, glink = row
-        bot.send_message(chat_id=callback_query.message.chat.id,
-                         text='PK {}, ID {}, Name {}, Link {}'.format(pkid, gid, gname, glink))
-        time.sleep(0.5)
-    bot.send_message(chat_id=callback_query.message.chat.id, text='Выбери действие', reply_markup=markup)
+        gloopcount += 1
+        grouplist += f"{gloopcount, gid, gname, glink}\n"
+        time.sleep(0.05)
+        patn = re.sub(r"[\([{})\]]", "", grouplist)
+    bot.send_message(chat_id=callback_query.message.chat.id, text=patn, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda c: c.data == 'showstats')
+def callback_handler(callback_query):
+    conn = sqlite3.connect('botusers.db')
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM botusers")
+    userscount = c.fetchone()[0]
+    time.sleep(0.25)
+    c.execute("SELECT COUNT(*) FROM botgroups")
+    groupscount = c.fetchone()[0]
+    bot.send_message(chat_id=adminuser, text='''
+Статистика бота:
+
+👱‍ Кол-во пользователей: {}
+👥 Кол-во групп: {}'''.format(userscount, groupscount))
+    conn.commit()
+    c.close()
 
 
 # Получаем данные от админа для добавления новой группы
@@ -190,23 +214,27 @@ def callback_handler(callback_query):
 # Добавление новой группы через кнопку
 def groupadd(message):
     data = message.text
-    newgid, newgname, newglink = data.split(',')
-    conn = sqlite3.connect('botusers.db')
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM botgroups")
-    gcountold = c.fetchone()[0]
-    time.sleep(0.25)
-    c.execute((config.addgroup.format(newgid, newgname, newglink)))
-    time.sleep(0.25)
-    c.execute("SELECT COUNT(*) FROM botgroups")
-    gcountcur = c.fetchone()[0]
-    conn.commit()
-    c.close()
-    if gcountold != gcountcur:
-        bot.send_message(chat_id=adminuser,
-                         text='Добавлена новая группа {} с ID {} и ссылкой {}'.format(newgname, newgid, newglink))
-    else:
-        bot.send_message(chat_id=adminuser, text='Что-то пошло не так')
+    try:
+        newgid, newgname, newglink = data.split(',')
+        conn = sqlite3.connect('botusers.db')
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM botgroups")
+        gcountold = c.fetchone()[0]
+        time.sleep(0.25)
+        c.execute((config.addgroup.format(newgid, newgname, newglink)))
+        time.sleep(0.25)
+        c.execute("SELECT COUNT(*) FROM botgroups")
+        gcountcur = c.fetchone()[0]
+        conn.commit()
+        c.close()
+        if gcountold != gcountcur:
+            bot.send_message(chat_id=adminuser,
+                             text='Добавлена новая группа {} с ID {} и ссылкой {}'.format(newgname, newgid, newglink))
+        else:
+            bot.send_message(chat_id=adminuser, text='Что-то пошло не так')
+    except ValueError:
+        print('Not enough values to unpack')
+        bot.send_message(chat_id=adminuser, text='Недостаточно аргументов, должно быть 3')
 
 
 def groupremove(message):
