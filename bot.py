@@ -121,17 +121,21 @@ def mirexrate(message):
     return user
 
 
-# @bot.message_handler(func=lambda message: message.text and "/admin" not in message.text)
-# def handle_message(message):
-#     if not message.chat.id == adminuser:
-#         bot.reply_to(message, '''Я тебя не понял. Доступные команды:
-# /start - перезапуск бота
-# /kursmir - показать текущий обменный курс''')
-#     else:
-#         bot.reply_to(message, '''Я тебя не понял. Доступные команды:
-# /start - перезапуск бота
-# /kursmir - показать текущий обменный курс
-# /admin - Администрирование бота''')
+@bot.message_handler(func=lambda message: message.text and "/admin" not in message.text)
+def handle_message(message):
+    user = message.chat.id
+    if not str(user).startswith('-'):   # Отвечать только пользователям в ЛС
+        if not message.chat.id == adminuser:
+            bot.reply_to(message, '''Я тебя не понял. Доступные команды:
+        /start - перезапуск бота
+        /kursmir - показать текущий обменный курс''')
+        else:
+            bot.reply_to(message, '''Я тебя не понял. Доступные команды:
+        /start - перезапуск бота
+        /kursmir - показать текущий обменный курс
+        /admin - Администрирование бота''')
+    else:
+        print('It is group')
 
 
 adminuser = 326070831
