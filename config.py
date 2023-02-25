@@ -11,15 +11,29 @@ CREATE TABLE IF NOT EXISTS botgroups
 ([id] INTEGER PRIMARY KEY ,[groupid] BIGINT UNIQUE, [name] TEXT, [link] TEXT)
 '''
 
+countgroups = 'SELECT COUNT(*) FROM botgroups'
+
+unknownusercmd = '''Я тебя не понял. Доступные команды:
+        /start - перезапуск бота
+        /kursmir - показать текущий обменный курс'''
+
+unknownadmincmd = '''Я тебя не понял. Доступные команды:
+        /start - перезапуск бота
+        /kursmir - показать текущий обменный курс
+        /admin - Администрирование бота'''
+
 addgroup = 'INSERT OR IGNORE INTO "botgroups" ("groupid", "name", "link") VALUES("{}", "{}", "{}");'
 
+addgrouphint = '''Чтобы добавить НОВУЮ группу, отправь 
+    данные по маске: -ID, Название группы , @группы или ссылка'''
+
 removegroup = 'DELETE FROM botgroups WHERE groupid="{}";'
+
+removegrouphint = 'Чтобы УДАЛИТЬ группу, отправь ID группы'
 
 addusertodb = 'INSERT OR IGNORE INTO "botusers" ("chat_id", "username") VALUES("{}", "{}");'
 
 getlastrate = 'SELECT * FROM exrates WHERE id=(select max(id) from exrates) ORDER BY id DESC LIMIT 1'
-
-adminsecretcode = '8iY.jrM9$d3(%'
 
 starttext = '''Привет!
 Функционал бота:
@@ -29,7 +43,6 @@ starttext = '''Привет!
 ✅ Показывает в большую или меньшую сторону изменился курс.
 ✅ Может работать как в ЛС, так и в приватных/публичных группах.
 
-График изменения курса смотреть: https://meetkz.com/exrates
 Чтобы начать работу с ботом, нажмите /kursmir'''
 
 supporttext = '''

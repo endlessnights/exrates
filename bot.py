@@ -126,14 +126,9 @@ def handle_message(message):
     user = message.chat.id
     if not str(user).startswith('-'):   # Отвечать только пользователям в ЛС
         if not message.chat.id == adminuser:
-            bot.reply_to(message, '''Я тебя не понял. Доступные команды:
-        /start - перезапуск бота
-        /kursmir - показать текущий обменный курс''')
+            bot.reply_to(message, config.unknownusercmd)
         else:
-            bot.reply_to(message, '''Я тебя не понял. Доступные команды:
-        /start - перезапуск бота
-        /kursmir - показать текущий обменный курс
-        /admin - Администрирование бота''')
+            bot.reply_to(message, config.unknownadmincmd)
     else:
         print('It is group')
 
@@ -188,7 +183,7 @@ def callback_handler(callback_query):
     c.execute("SELECT COUNT(*) FROM botusers")
     userscount = c.fetchone()[0]
     time.sleep(0.25)
-    c.execute("SELECT COUNT(*) FROM botgroups")
+    c.execute(config.countgroups)
     groupscount = c.fetchone()[0]
     bot.send_message(chat_id=adminuser, text='''
 Статистика бота:
@@ -202,16 +197,14 @@ def callback_handler(callback_query):
 # Получаем данные от админа для добавления новой группы
 @bot.callback_query_handler(func=lambda c: c.data == 'addgroup')
 def callback_handler(callback_query):
-    addgroup = bot.send_message(chat_id=callback_query.message.chat.id, text='''Чтобы добавить НОВУЮ группу, отправь 
-    данные по маске: -ID, Название группы , @группы или ссылка''')
+    addgroup = bot.send_message(chat_id=callback_query.message.chat.id, text=config.addgrouphint)
     bot.register_next_step_handler(addgroup, groupadd)
 
 
 # Получаем данные от админа для удаления группы
 @bot.callback_query_handler(func=lambda c: c.data == 'removegroup')
 def callback_handler(callback_query):
-    removegroup = bot.send_message(chat_id=callback_query.message.chat.id, text='Чтобы УДАЛИТЬ группу, отправь ID '
-                                                                                'группы')
+    removegroup = bot.send_message(chat_id=callback_query.message.chat.id, text=config.removegrouphint)
     bot.register_next_step_handler(removegroup, groupremove)
 
 
@@ -222,12 +215,12 @@ def groupadd(message):
         newgid, newgname, newglink = data.split(',')
         conn = sqlite3.connect('botusers.db')
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM botgroups")
+        c.execute(config.countgroups)
         gcountold = c.fetchone()[0]
         time.sleep(0.25)
         c.execute((config.addgroup.format(newgid, newgname, newglink)))
         time.sleep(0.25)
-        c.execute("SELECT COUNT(*) FROM botgroups")
+        c.execute(config.countgroups)
         gcountcur = c.fetchone()[0]
         conn.commit()
         c.close()
@@ -245,12 +238,12 @@ def groupremove(message):
     data = message.text
     conn = sqlite3.connect('botusers.db')
     c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM botgroups")
+    c.execute(config.countgroups)
     time.sleep(0.25)
     gcountold = c.fetchone()[0]
     c.execute(config.removegroup.format(data))
     conn.commit()
-    c.execute("SELECT COUNT(*) FROM botgroups")
+    c.execute(config.countgroups)
     gcountcur = c.fetchone()[0]
     if gcountold > gcountcur:
         bot.send_message(chat_id=adminuser, text='Группа с ID {} успешно удалена'.format(data))
