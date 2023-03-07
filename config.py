@@ -59,8 +59,7 @@ supporttext = '''
 Реквизиты:
 4400 4301 0402 9738 - Kaspi, Bakhti B.
 5395 4574 1465 0022 - Jusan, Bakhti B.
-2200 1502 3169 8355 - Альфа-Банк МИР (РФ)
-4584 4328 4064 9595 - Альфа-Банк (РФ)
+TON: UQDMwwUaQeJponB_ngIXF99PM5Ktwwf-UDItbFDkdCO3OPCL
 ️'''
 
 noaccesstext = '''
