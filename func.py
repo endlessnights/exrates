@@ -11,6 +11,8 @@ def catcherrors(e, chat):
             print("Forbidden: bot was blocked by the chat", chat)
         elif 'bot was kicked from the group chat' in e.description:
             print("Forbidden: bot was kicked from the chat", chat)
+        elif 'user is deactivated' in e.description:
+            print('user is deactivated', chat)
         else:
             raise e
     else:
