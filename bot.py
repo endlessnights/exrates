@@ -19,7 +19,7 @@ users = []
 conn = sqlite3.connect('botusers.db')
 c = conn.cursor()
 # Create a table to store user information
-c.execute(config.createuserstable)
+c.execute(config.createtable)
 conn.commit()
 # Create a table to store Group information
 c.execute(config.creategroupstable)
@@ -291,6 +291,8 @@ def main():
                 bot.send_message(chat_id=chat, text=message)
             except telebot.apihelper.ApiTelegramException as e:
                 func.catcherrors(e, chat)
+            except Exception as e:
+                print(f'Error: {e}')
             time.sleep(2)
         write_to_file("linecount.txt", current_record_count)
         write_to_file("exrate.txt", rate)
