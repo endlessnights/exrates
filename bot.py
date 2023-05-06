@@ -3,6 +3,7 @@ import envparse, telebot, config, func, time, sqlite3, re, locale
 from telebot import types
 
 production = 'True'
+
 envparse.env.read_envfile()
 if production:
     api_token: str = envparse.env.str("tg_token_prod")
