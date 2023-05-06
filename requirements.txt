@@ -20,3 +20,6 @@ tzlocal==4.2
 uri==2.0.1
 urllib3==1.26.10
 Werkzeug==2.1.2
+
+selenium~=4.8.2
+envparse~=0.2.0

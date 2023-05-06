@@ -1,17 +1,13 @@
-import locale
-import re
-import sqlite3
-import time
 from datetime import date, datetime
-
-import telebot
+import envparse, telebot, config, func, time, sqlite3, re, locale
 from telebot import types
 
-import config
-import func
-
-api_token = '5956191624:AAHw268WZP_apCbj9aDUc6wAFE9uyEd4B0o'  # test bot @test239botbot
-# api_token = '6173204610:AAEVmFTmk-b3-UdjlUqHFyyFvVbI6va6Ymg'  # production bot @mirexratebot
+production = 'True'
+envparse.env.read_envfile()
+if production:
+    api_token: str = envparse.env.str("tg_token_prod")
+else:
+    api_token: str = envparse.env.str("tg_token_dev")
 bot = telebot.TeleBot(api_token)
 users = []
 
@@ -19,7 +15,7 @@ users = []
 conn = sqlite3.connect('botusers.db')
 c = conn.cursor()
 # Create a table to store user information
-c.execute(config.createtable)
+c.execute(config.createuserstable)
 conn.commit()
 # Create a table to store Group information
 c.execute(config.creategroupstable)
@@ -281,7 +277,7 @@ def main():
     previous_record_count = read_from_file("linecount.txt")
     previous_rate = read_from_file("exrate.txt")
     if current_record_count > previous_record_count:
-        print("New database entry added")
+        print("Ne database entry added")
         c, d = getmirkurs()
         user_ids, group_ids = getchatidsfromdb()
         rate_prefix = "🟢⬆️ " if rate > previous_rate else "🔴⬇️ "
