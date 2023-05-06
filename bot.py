@@ -1,15 +1,20 @@
+import locale
+import re
+import sqlite3
+import time
 from datetime import date, datetime
-import envparse, telebot, config, func, time, sqlite3, re, locale
+import telebot
 from telebot import types
+import envparse
+import config
+import func
 
-production = 'True'
 
 envparse.env.read_envfile()
-if production:
-    api_token: str = envparse.env.str("tg_token_prod")
-else:
-    api_token: str = envparse.env.str("tg_token_dev")
+api_token: str = envparse.env.str("tg_token_prod")
+# api_token: str = envparse.env.str("tg_token_dev")
 bot = telebot.TeleBot(api_token)
+
 users = []
 
 # Connect to the database
@@ -76,8 +81,10 @@ def hellouser(message):
     button = types.InlineKeyboardButton(text='💰 Поддержать автора и проект', callback_data='send_message')
     markup.add(button)
     if str(currentuser).startswith('-'):
+        print('its group')
         bot.send_message(chat_id=message.chat.id, text=config.starttext)
     else:
+        print('its user')
         bot.send_message(message.chat.id, text=config.starttext, reply_markup=markup)
 
 
@@ -278,7 +285,7 @@ def main():
     previous_record_count = read_from_file("linecount.txt")
     previous_rate = read_from_file("exrate.txt")
     if current_record_count > previous_record_count:
-        print("Ne database entry added")
+        print("New database entry added")
         c, d = getmirkurs()
         user_ids, group_ids = getchatidsfromdb()
         rate_prefix = "🟢⬆️ " if rate > previous_rate else "🔴⬇️ "
