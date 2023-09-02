@@ -9,10 +9,9 @@ import envparse
 import config
 import func
 
-
 envparse.env.read_envfile()
-api_token: str = envparse.env.str("tg_token_prod")
-# api_token: str = envparse.env.str("tg_token_dev")
+# api_token: str = envparse.env.str("tg_token_prod")
+api_token: str = envparse.env.str("tg_token_dev")
 bot = telebot.TeleBot(api_token)
 
 users = []
@@ -85,7 +84,7 @@ def hellouser(message):
         bot.send_message(chat_id=message.chat.id, text=config.starttext)
     else:
         print('its user')
-        bot.send_message(message.chat.id, text=config.starttext, reply_markup=markup)
+        bot.send_message(message.chat.id, text=config.starttextuser, reply_markup=markup)
 
 
 @bot.callback_query_handler(func=lambda c: c.data == 'send_message')
@@ -113,7 +112,9 @@ def mirexrate(message):
                 func.catcherrors(e, user)
     else:
         try:
-            bot.send_message(message.chat.id, text=a)  # если текущий пользователь - человек, отправляем ответ
+            bot.send_message(message.chat.id, text=(f'''{a}
+
+*ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА. ПИСАТЬ @pycarrot2*'''))  # если текущий пользователь - человек, отправляем ответ
             userinfo = message.from_user
             conn = sqlite3.connect('botusers.db')
             c = conn.cursor()
@@ -128,7 +129,7 @@ def mirexrate(message):
 @bot.message_handler(func=lambda message: message.text and "/admin" not in message.text)
 def handle_message(message):
     user = message.chat.id
-    if not str(user).startswith('-'):   # Отвечать только пользователям в ЛС
+    if not str(user).startswith('-'):  # Отвечать только пользователям в ЛС
         if not message.chat.id == adminuser:
             bot.reply_to(message, config.unknownusercmd)
         else:
@@ -281,6 +282,27 @@ def read_from_file(filename):
         return float(f.read())
 
 
+# def main():
+#     previous_record_count = read_from_file("linecount.txt")
+#     previous_rate = read_from_file("exrate.txt")
+#     if current_record_count > previous_record_count:
+#         print("New database entry added")
+#         c, d = getmirkurs()
+#         user_ids, group_ids = getchatidsfromdb()
+#         rate_prefix = "🟢⬆️ " if rate > previous_rate else "🔴⬇️ "
+#         message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
+#         for chat in group_ids + user_ids:
+#             try:
+#                 bot.send_message(chat_id=chat, text=message)
+#             except telebot.apihelper.ApiTelegramException as e:
+#                 func.catcherrors(e, chat)
+#             except Exception as e:
+#                 print(f'Error: {e}')
+#             time.sleep(2)
+#         write_to_file("linecount.txt", current_record_count)
+#         write_to_file("exrate.txt", rate)
+
+
 def main():
     previous_record_count = read_from_file("linecount.txt")
     previous_rate = read_from_file("exrate.txt")
@@ -289,10 +311,19 @@ def main():
         c, d = getmirkurs()
         user_ids, group_ids = getchatidsfromdb()
         rate_prefix = "🟢⬆️ " if rate > previous_rate else "🔴⬇️ "
-        message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
         for chat in group_ids + user_ids:
             try:
-                bot.send_message(chat_id=chat, text=message)
+                if chat in group_ids:
+                    # Send a different message to group chats
+                    group_message = f"Новый обменный курс МИР для группы!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
+                    bot.send_message(chat_id=chat, text=group_message)
+                else:
+                    # Send a different message to user chats
+                    user_message = \
+                        f'''Новый обменный курс МИР для пользователя!\n{d}\n{rate_prefix}{rate} тенге за 1 руб
+
+*ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА. ПИСАТЬ @pycarrot2*'''
+                    bot.send_message(chat_id=chat, text=user_message)
             except telebot.apihelper.ApiTelegramException as e:
                 func.catcherrors(e, chat)
             except Exception as e:
