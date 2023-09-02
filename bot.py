@@ -322,7 +322,7 @@ def main():
                     user_message = \
                         f'''Новый обменный курс МИР для пользователя!\n{d}\n{rate_prefix}{rate} тенге за 1 руб
 
-*ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА. ПИСАТЬ @pycarrot2*'''
+*ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА. ПИСАТЬ @pycarrot2* '''
                     bot.send_message(chat_id=chat, text=user_message)
             except telebot.apihelper.ApiTelegramException as e:
                 func.catcherrors(e, chat)
