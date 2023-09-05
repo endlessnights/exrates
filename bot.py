@@ -10,8 +10,8 @@ import config
 import func
 
 envparse.env.read_envfile()
-# api_token: str = envparse.env.str("tg_token_prod")
-api_token: str = envparse.env.str("tg_token_dev")
+api_token: str = envparse.env.str("tg_token_prod")
+# api_token: str = envparse.env.str("tg_token_dev")
 bot = telebot.TeleBot(api_token)
 
 users = []
@@ -315,12 +315,12 @@ def main():
             try:
                 if chat in group_ids:
                     # Send a different message to group chats
-                    group_message = f"Новый обменный курс МИР для группы!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
+                    group_message = f"Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб"
                     bot.send_message(chat_id=chat, text=group_message)
                 else:
                     # Send a different message to user chats
                     user_message = \
-                        f'''Новый обменный курс МИР для пользователя!\n{d}\n{rate_prefix}{rate} тенге за 1 руб
+                        f'''Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб
 
 *ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА. ПИСАТЬ @pycarrot2* '''
                     bot.send_message(chat_id=chat, text=user_message)
