@@ -85,7 +85,6 @@ def hellouser(message):
     else:
         print('its user')
         bot.send_message(message.chat.id, text=f'''{config.starttextuser}
-
 {config.ad_text}''', reply_markup=markup, parse_mode='HTML')
 
 
