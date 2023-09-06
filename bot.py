@@ -10,8 +10,8 @@ import config
 import func
 
 envparse.env.read_envfile()
-# api_token: str = envparse.env.str("tg_token_prod")
-api_token: str = envparse.env.str("tg_token_dev")
+api_token: str = envparse.env.str("tg_token_prod")
+# api_token: str = envparse.env.str("tg_token_dev")
 bot = telebot.TeleBot(api_token)
 
 users = []

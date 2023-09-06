@@ -170,27 +170,13 @@ console.log('Ответ: '+'{{resp.status_code}}')
 
 .column {
     flex: 1; /* Each column takes up an equal amount of space */
-    padding: 20px;
+    padding: 10px;
     border: 0px #ccc;
     margin: 10px;
+    font-size:2.5vh;
 }
 </style>
 <div class="container">
-    <div class="column">
-        <h2>О проекте:</h2>
-        <p style="font-size:14pt;">
-            В дополнение к этому сервису появился Telegram Бот! <a href="https://t.me/mirexratebot">Ссылка на бота</a><br /><br />
-            Сервис автоматически забирает данные с <a href="https://mironline.ru/support/list/kursy_mir/" target="_blank">официального
-            сайта ПС "МИР".</a> <br />
-
-            Данные обновляются раз в 4 часа. <br />Формула {% for item in rows|reverse %}
-            {% if loop.index <=1 %} 1 / {{rate}} ≈ {{item.exrate}}{% endif %}{% endfor %}<br />
-
-        </p>
-        <p style="font-size:13pt;" class="border-donate">Хотите отблагодарить разработчика, сделайте добровольное пожертвование:<br />
-            Kaspi: +7 705 568 50 30 (Bakhti B.)</p>
-        <p style="font-size:13pt;">По вопросам и предложениям обращаться: <a href="https://t.me/pycarrot2">Telegram</a></p>
-    </div>
     <div class="column">
         <h2>Реклама</h2>
         <p>
@@ -214,6 +200,21 @@ console.log('Ответ: '+'{{resp.status_code}}')
 
             🔥Любые объемы
         </p>
+    </div>
+    <div class="column">
+        <h2>О проекте:</h2>
+        <p>
+            В дополнение к этому сервису появился Telegram Бот! <a href="https://t.me/mirexratebot">Ссылка на бота</a><br /><br />
+            Сервис автоматически забирает данные с <a href="https://mironline.ru/support/list/kursy_mir/" target="_blank">официального
+            сайта ПС "МИР".</a> <br />
+
+            Данные обновляются раз в 4 часа. <br />Формула {% for item in rows|reverse %}
+            {% if loop.index <=1 %} 1 / {{rate}} ≈ {{item.exrate}}{% endif %}{% endfor %}<br />
+
+        </p>
+        <p class="border-donate">Хотите отблагодарить разработчика, сделайте добровольное пожертвование:<br />
+            Kaspi: +7 705 568 50 30 (Bakhti B.)</p>
+        <p style="font-size:13pt;">По вопросам и предложениям обращаться: <a href="https://t.me/pycarrot2">Telegram</a></p>
     </div>
 </div>
 </body>
