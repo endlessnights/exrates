@@ -10,8 +10,8 @@ import config
 import func
 
 envparse.env.read_envfile()
-api_token: str = envparse.env.str("tg_token_prod")
-# api_token: str = envparse.env.str("tg_token_dev")
+# api_token: str = envparse.env.str("tg_token_prod")
+api_token: str = envparse.env.str("tg_token_dev")
 bot = telebot.TeleBot(api_token)
 
 users = []
@@ -84,7 +84,9 @@ def hellouser(message):
         bot.send_message(chat_id=message.chat.id, text=config.starttext)
     else:
         print('its user')
-        bot.send_message(message.chat.id, text=config.starttextuser, reply_markup=markup)
+        bot.send_message(message.chat.id, text=f'''{config.starttextuser}
+
+{config.ad_text}''', reply_markup=markup, parse_mode='HTML')
 
 
 @bot.callback_query_handler(func=lambda c: c.data == 'send_message')
@@ -114,7 +116,7 @@ def mirexrate(message):
         try:
             bot.send_message(message.chat.id, text=(f'''{a}
 
-*ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА. ПИСАТЬ @pycarrot2*'''))  # если текущий пользователь - человек, отправляем ответ
+{config.ad_text}'''), parse_mode='HTML')  # если текущий пользователь - человек, отправляем ответ
             userinfo = message.from_user
             conn = sqlite3.connect('botusers.db')
             c = conn.cursor()
@@ -322,8 +324,8 @@ def main():
                     user_message = \
                         f'''Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб
 
-*ЗДЕСЬ МОГЛА БЫТЬ ВАША РЕКЛАМА. ПИСАТЬ @pycarrot2* '''
-                    bot.send_message(chat_id=chat, text=user_message)
+{config.ad_text}'''
+                    bot.send_message(chat_id=chat, text=user_message, parse_mode='HTML')
             except telebot.apihelper.ApiTelegramException as e:
                 func.catcherrors(e, chat)
             except Exception as e:
