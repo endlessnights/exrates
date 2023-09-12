@@ -13,6 +13,8 @@ def catcherrors(e, chat):
             print("Forbidden: bot was kicked from the chat", chat)
         elif 'user is deactivated' in e.description:
             print('user is deactivated', chat)
+        elif 'bot was kicked from the supergroup chat' in e.description:
+            print("Forbidden: bot was kicked from the supergroup chat", chat)
         else:
             raise e
     else:
