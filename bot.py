@@ -4,6 +4,7 @@ import sqlite3
 import time
 from datetime import date, datetime
 import telebot
+import random
 from telebot import types
 import envparse
 import config
@@ -67,6 +68,7 @@ def getchatidsfromdb():
 
 @bot.message_handler(commands=['start'])
 def hellouser(message):
+    random_ad_text = random.choice(config.ad_texts)
     currentuser = message.chat.id
     userinfo = message.from_user
     if not str(currentuser).startswith('-'):
@@ -81,11 +83,11 @@ def hellouser(message):
     markup.add(button)
     if str(currentuser).startswith('-'):
         print('its group')
-        bot.send_message(chat_id=message.chat.id, text=config.starttext)
+        bot.send_message(chat_id=message.chat.id, text=f'{config.starttext}, {message.chat.id}')
     else:
         print('its user')
         bot.send_message(message.chat.id, text=f'''{config.starttextuser}
-{config.ad_text}''', reply_markup=markup, parse_mode='HTML')
+{random_ad_text}''', reply_markup=markup, parse_mode='HTML')
 
 
 @bot.callback_query_handler(func=lambda c: c.data == 'send_message')
@@ -96,6 +98,7 @@ def callback_handler(callback_query):
 
 @bot.message_handler(commands=['kursmir'])
 def mirexrate(message):
+    random_ad_text = random.choice(config.ad_texts)
     user = message.chat.id  # Текущий ID чата/пользователя
     result = getmirkurs()
     a, b = result
@@ -115,7 +118,7 @@ def mirexrate(message):
         try:
             bot.send_message(message.chat.id, text=(f'''{a}
 
-{config.ad_text}'''), parse_mode='HTML')  # если текущий пользователь - человек, отправляем ответ
+{random_ad_text}'''), parse_mode='HTML')  # если текущий пользователь - человек, отправляем ответ
             userinfo = message.from_user
             conn = sqlite3.connect('botusers.db')
             c = conn.cursor()
@@ -305,6 +308,7 @@ def read_from_file(filename):
 
 
 def main():
+    random_ad_text = random.choice(config.ad_texts)
     previous_record_count = read_from_file("linecount.txt")
     previous_rate = read_from_file("exrate.txt")
     if current_record_count > previous_record_count:
@@ -323,7 +327,7 @@ def main():
                     user_message = \
                         f'''Новый обменный курс МИР!\n{d}\n{rate_prefix}{rate} тенге за 1 руб
 
-{config.ad_text}'''
+{random_ad_text}'''
                     bot.send_message(chat_id=chat, text=user_message, parse_mode='HTML')
             except telebot.apihelper.ApiTelegramException as e:
                 func.catcherrors(e, chat)
