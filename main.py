@@ -1,9 +1,11 @@
+import random
 import sqlite3
 from datetime import date, datetime
 import requests as requests
 from pyquery import PyQuery as pq
 from flask import render_template
 from flask import Flask
+import config
 import json
 
 app = Flask(__name__)
@@ -17,14 +19,17 @@ c.execute('''
             ''')
 conn.commit()
 
-uri = 'https://mironline.ru/support/list/kursy_mir/'
+# uri = 'https://mironline.ru/support/list/kursy_mir/'
+uri = 'https://ru.myfin.by/converter/rub-kzt'
 resp = requests.get(uri, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
 print(resp)
 if not resp.ok:
     pass
 else:
     d = pq(resp.text)
-    rate = d("td:contains('Казахстанский тенге')").parent().find("span").text().replace(',', '.')
+    # rate = d("td:contains('Казахстанский тенге')").parent().find("span").text().replace(',', '.')
+    rate = d('table:contains("Российский рубль") tr:first td:nth-child(2)').text().split()[2]
+    print(rate)
     # получаем текущую дату гггг-мм-дд
     cdate = str(date.today())
     print(cdate)
@@ -66,6 +71,7 @@ def getdata(rows):
 
 @app.route("/")
 def exrates(*args):
+    random_ad_text = random.choice(config.web_ad_texts)
     rows = getdata(rows=args)
     tdate = str(date.today().strftime("%d.%m.%Y"))
 
@@ -85,6 +91,7 @@ def exrates(*args):
         status=status,
         uri=uri,
         resp=resp,
+        random_ad_text=random_ad_text,
     )
 
 
