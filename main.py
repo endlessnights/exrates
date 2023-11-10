@@ -1,12 +1,11 @@
 import random
 import sqlite3
 from datetime import date, datetime
-import requests as requests
-from pyquery import PyQuery as pq
+from urllib.request import urlretrieve
 from flask import render_template
+from pdfquery import PDFQuery
 from flask import Flask
 import config
-import json
 
 app = Flask(__name__)
 
@@ -19,42 +18,40 @@ c.execute('''
             ''')
 conn.commit()
 
-# uri = 'https://mironline.ru/support/list/kursy_mir/'
-uri = 'https://ru.myfin.by/converter/rub-kzt'
-resp = requests.get(uri, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-print(resp)
-if not resp.ok:
-    pass
+
+url = ("https://privetmir.ru/upload/FX_rate_Mir/FX_rate_Mir.pdf")
+filename = "kursmir.pdf"
+urlretrieve(url, filename)
+pdf = PDFQuery("kursmir.pdf")
+pdf.load()
+rate = text_elements2 = pdf.pq('LTTextLineHorizontal')[164].text
+rate = rate.replace(',', '.')
+print(rate)
+# получаем текущую дату гггг-мм-дд
+cdate = str(date.today())
+print(cdate)
+print('Курс: ' + str(rate))
+# получаем обменный курс
+exrate = round((1 / float(rate)), 2)
+print('Обменный курс: ' + str(exrate))
+# Проверяем совпадает ли последняя запись с текущим курсом
+sqlexec = 'SELECT EXISTS(SELECT * FROM exrates WHERE id=(select max(id) from exrates) and exrate={} ORDER BY id DESC LIMIT 1)'
+presence = (c.execute(sqlexec.format(exrate))).fetchone()
+print(presence)
+# Если не совпадает, записываем новое значение
+if str(presence) == '(0,)':
+    status = 'Курс изменился'
+    print(status)
+    conn = sqlite3.connect('ratesdb')
+    c = conn.cursor()
+    c.execute(
+        'INSERT INTO "exrates" ("date", "rate", "exrate") VALUES("{}", "{}", "{}");'.format(
+            cdate, rate, exrate))
+    conn.commit()
+    conn.close()
 else:
-    d = pq(resp.text)
-    # rate = d("td:contains('Казахстанский тенге')").parent().find("span").text().replace(',', '.')
-    rate = d('table:contains("Российский рубль") tr:first td:nth-child(2)').text().split()[2]
-    print(rate)
-    # получаем текущую дату гггг-мм-дд
-    cdate = str(date.today())
-    print(cdate)
-    print('Курс: ' + str(rate))
-    # получаем обменный курс
-    exrate = round((1 / float(rate)), 2)
-    print('Обменный курс: ' + str(exrate))
-    # Проверяем совпадает ли последняя запись с текущим курсом
-    sqlexec = 'SELECT EXISTS(SELECT * FROM exrates WHERE id=(select max(id) from exrates) and exrate={} ORDER BY id DESC LIMIT 1)'
-    presence = (c.execute(sqlexec.format(exrate))).fetchone()
-    print(presence)
-    # Если не совпадает, записываем новое значение
-    if str(presence) == '(0,)':
-        status = 'Курс изменился'
-        print(status)
-        conn = sqlite3.connect('ratesdb')
-        c = conn.cursor()
-        c.execute(
-            'INSERT INTO "exrates" ("date", "rate", "exrate") VALUES("{}", "{}", "{}");'.format(
-                cdate, rate, exrate))
-        conn.commit()
-        conn.close()
-    else:
-        status = 'Курс не изменился'
-        print(status)
+    status = 'Курс не изменился'
+    print(status)
 
 
 def getdata(rows):
@@ -89,8 +86,6 @@ def exrates(*args):
         rate=rate,
         presence=presence,
         status=status,
-        uri=uri,
-        resp=resp,
         random_ad_text=random_ad_text,
     )
 
