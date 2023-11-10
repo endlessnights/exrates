@@ -1,11 +1,10 @@
 import random
 import sqlite3
 from datetime import date, datetime
-from urllib.request import urlretrieve
 from flask import render_template
-from pdfquery import PDFQuery
 from flask import Flask
 import config
+import requests
 
 app = Flask(__name__)
 
@@ -18,14 +17,18 @@ c.execute('''
             ''')
 conn.commit()
 
+def get_kurs_from_web():
+    url = "https://i.dvcdn.ru/rates/mir.json"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        data = resp.json()
+        for entry in data:
+            if entry['currency'] == 'Казахстанский\xa0тенге':
+                rate = entry['rate']
+                rate = rate.replace(',', '.')
+                return rate
 
-url = ("https://privetmir.ru/upload/FX_rate_Mir/FX_rate_Mir.pdf")
-filename = "kursmir.pdf"
-urlretrieve(url, filename)
-pdf = PDFQuery("kursmir.pdf")
-pdf.load()
-rate = text_elements2 = pdf.pq('LTTextLineHorizontal')[164].text
-rate = rate.replace(',', '.')
+rate = get_kurs_from_web()
 print(rate)
 # получаем текущую дату гггг-мм-дд
 cdate = str(date.today())
