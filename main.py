@@ -22,11 +22,14 @@ def get_kurs_from_web():
     resp = requests.get(url)
     if resp.status_code == 200:
         data = resp.json()
+        print(data)
         for entry in data:
-            if entry['currency'] == 'Казахстанский\xa0тенге':
+            if entry['currency'] == 'Казахстанский тенге':
                 rate = entry['rate']
                 rate = rate.replace(',', '.')
                 return rate
+    else:
+        print('not 200')
 
 rate = get_kurs_from_web()
 print(rate)
